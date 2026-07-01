@@ -1,0 +1,14 @@
+var fs = require('fs');
+var buf = fs.readFileSync('d:/XM/android-app-JZGJ/app/src/main/assets/index.html');
+var lines = buf.toString('utf8').split('\n');
+console.log('Line 2612:', JSON.stringify(lines[2611]));
+console.log('Line 2617:', JSON.stringify(lines[2616]));
+console.log('Line 2622:', JSON.stringify(lines[2621]));
+console.log('Line 2623:', JSON.stringify(lines[2622]));
+console.log('Line 2625:', JSON.stringify(lines[2624]));
+console.log('Line 2635:', JSON.stringify(lines[2634]));
+console.log('Line 2636:', JSON.stringify(lines[2635]));
+console.log('Line 2638:', JSON.stringify(lines[2637]));
+console.log('Line 2648:', JSON.stringify(lines[2647]));
+console.log('Line 2649:', JSON.stringify(lines[2648]));
+console.log('Line 2650:', JSON.stringify(lines[2649]));

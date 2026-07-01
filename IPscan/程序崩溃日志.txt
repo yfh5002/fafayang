@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Desktop\IPscan\import re.py", line 347, in <module>
+    app = NetChecker(main_window)
+  File "c:\Users\Administrator\Desktop\IPscan\import re.py", line 64, in __init__
+    self.create_widgets()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "c:\Users\Administrator\Desktop\IPscan\import re.py", line 108, in create_widgets
+    self.lbl_backup_gw = tk.Label(netcfg_frame, text=self.backup_gateway,
+                                                     ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NetChecker' object has no attribute 'backup_gateway'

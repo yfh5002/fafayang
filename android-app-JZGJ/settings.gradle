@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        // 腾讯镜像（加速国内下载）
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    // 改为优先使用 settings 里的仓库，允许项目仓库存在
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        // 腾讯镜像（加速国内下载）
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "JiZhangGongJu"
+include ':app'
