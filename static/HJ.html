@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HJSYSTEM // 元器件管理系统</title>
+    <style>
+        /* ===== CSS Variables - 浅蓝色系 ===== */
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --primary-lighter: #eff6ff;
+            --primary-soft: rgba(37,99,235,0.08);
+
+            --success-color: #16a34a;
+            --success-hover: #15803d;
+            --success-light: #dcfce7;
+            --success-soft: rgba(22,163,74,0.08);
+
+            --danger-color: #dc2626;
+            --danger-hover: #b91c1c;
+            --danger-light: #fee2e2;
+            --danger-soft: rgba(220,38,38,0.08);
+
+            --warning-color: #d97706;
+            --warning-hover: #b45309;
+            --warning-light: #fef3c7;
+            --warning-soft: rgba(217,119,6,0.08);
+
+            --info-color: #0891b2;
+            --info-hover: #0e7490;
+            --info-light: #cffafe;
+            --info-soft: rgba(8,145,178,0.08);
+
+            --bg-page: #f0f9ff;
+            --bg-card: #ffffff;
+            --bg-hover: #f1f5f9;
+            --bg-striped: #f8fafc;
+
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ===== Layout ===== */
+        .wrap { display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* ===== Header ===== */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-light);
+            padding: 10px 20px;
+            display: flex; align-items: center; gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .header-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; color: var(--primary-color); }
+        .header-title .icon { font-size: 22px; }
+        .header-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+        .version-badge {
+            font-size: 12px; font-weight: 600; padding: 3px 10px;
+            border-radius: 20px; background: var(--primary-lighter); color: var(--primary-color);
+            border: 1px solid var(--primary-light);
+        }
+        .online-badge { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--success-color); }
+        .online-badge::before {
+            content: ''; width: 8px; height: 8px; border-radius: 50%;
+            background: var(--success-color); box-shadow: 0 0 0 2px var(--success-light);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .user-info { font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+
+        /* ===== Stats Bar ===== */
+        .stats-bar {
+            background: var(--bg-card);
+            padding: 10px 20px;
+            display: flex; gap: 20px; flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .stat-pill { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .stat-pill .lbl { color: var(--text-muted); }
+        .stat-pill .val { font-weight: 700; font-size: 15px; color: var(--primary-color); }
+        .stat-pill .val.green { color: var(--success-color); }
+        .stat-pill .val.orange { color: var(--warning-color); }
+
+        /* ===== Toolbar ===== */
+        .toolbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-light);
+            padding: 10px 20px;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .search-box { position: relative; flex: 1; min-width: 200px; max-width: 300px; }
+        .search-box input {
+            width: 100%; padding: 7px 12px 7px 34px;
+            border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            font-size: 13px; font-family: inherit; background: var(--bg-page); transition: all 0.2s;
+        }
+        .search-box input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-soft); background: white; }
+        .search-box::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; opacity: 0.5; }
+
+        /* ===== Buttons ===== */
+        .btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; font-size: 13px; font-family: inherit; font-weight: 500;
+            border-radius: var(--radius-sm); border: 1px solid transparent;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap; line-height: 1.4;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: white; color: var(--text-secondary); border-color: var(--border-color); }
+        .btn-secondary:hover:not(:disabled) { background: var(--primary-lighter); color: var(--primary-color); border-color: var(--primary-light); }
+        .btn-success { background: white; color: var(--success-color); border-color: var(--success-color); }
+        .btn-success:hover:not(:disabled) { background: var(--success-color); color: white; }
+        .btn-danger { background: white; color: var(--danger-color); border-color: var(--danger-color); }
+        .btn-danger:hover:not(:disabled) { background: var(--danger-color); color: white; }
+        .btn-warning { background: white; color: var(--warning-color); border-color: var(--warning-color); }
+        .btn-warning:hover:not(:disabled) { background: var(--warning-color); color: white; }
+        .btn-info { background: white; color: var(--info-color); border-color: var(--info-color); }
+        .btn-info:hover:not(:disabled) { background: var(--info-color); color: white; }
+        .toolbar-divider { width: 1px; height: 28px; background: var(--border-color); margin: 0 4px; }
+        .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+        /* ===== Main Content ===== */
+        .main { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* ===== Data Card ===== */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column; flex: 1;
+        }
+
+        .table-container { flex: 1; overflow: auto; max-height: calc(100vh - 310px); min-height: 300px; }
+        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: var(--bg-striped); }
+        .table-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+        thead { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, #e0efff 0%, #dbeafe 100%); }
+        thead th {
+            padding: 10px 12px; text-align: center; font-weight: 600; font-size: 12px;
+            letter-spacing: 0.5px; color: var(--text-secondary);
+            border-bottom: 2px solid var(--primary-light); white-space: nowrap; user-select: none;
+        }
+        thead th:first-child { text-align: center; }
+        thead th:last-child { text-align: center; }
+
+        tbody tr { transition: background 0.1s; }
+        tbody tr:nth-child(even) { background: var(--bg-striped); }
+        tbody tr:hover { background: var(--primary-lighter); }
+        tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); text-align: center; vertical-align: middle; }
+        tbody td:first-child { text-align: center; }
+        tbody td:last-child { text-align: center; }
+
+        .td-seq { color: var(--text-muted); font-size: 12px; width: 52px; }
+        .td-name { font-weight: 600; color: var(--primary-color); text-align: left; }
+        .td-model { color: var(--text-secondary); text-align: left; }
+        .td-qty { font-variant-numeric: tabular-nums; }
+        .td-price { color: var(--warning-color); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+        .td-subtotal { color: var(--success-color); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+        .td-remarks { color: var(--text-muted); font-size: 12px; text-align: left; }
+        .td-actions { white-space: nowrap; }
+
+        .row-cb { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); }
+
+        .action-btn-sm {
+            padding: 3px 8px; font-size: 12px; border-radius: 4px;
+            border: 1px solid var(--border-color); background: white; color: var(--text-secondary);
+            cursor: pointer; font-family: inherit; transition: all 0.15s; margin: 1px;
+        }
+        .action-btn-sm:hover { background: var(--primary-lighter); color: var(--primary-color); border-color: var(--primary-light); }
+        .action-btn-sm.danger:hover { background: var(--danger-light); color: var(--danger-color); border-color: var(--danger-color); }
+
+        /* ===== Bottom Bar ===== */
+        .bottom-bar {
+            background: var(--bg-card); border-top: 1px solid var(--border-light);
+            padding: 8px 20px; display: flex; align-items: center; gap: 12px;
+            font-size: 13px; color: var(--text-secondary); flex-wrap: wrap;
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+        .empty-state .hint { font-size: 13px; margin-top: 8px; }
+
+        /* ===== Modals ===== */
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-backdrop.active { display: flex; }
+        .modal {
+            background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl);
+            animation: modalIn 0.2s ease-out; overflow: hidden;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+            background: var(--bg-page);
+        }
+        .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .modal-close { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+        .modal-close:hover { background: var(--danger-light); color: var(--danger-color); }
+        .modal-body { padding: 20px; }
+        .modal-footer {
+            padding: 14px 20px; background: var(--bg-page); border-top: 1px solid var(--border-light);
+            display: flex; justify-content: flex-end; gap: 8px;
+        }
+
+        /* ===== Forms ===== */
+        .form-row { margin-bottom: 14px; }
+        .form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-row input, .form-row textarea, .form-row select {
+            width: 100%; padding: 8px 12px; font-size: 13px; font-family: inherit;
+            border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            background: white; transition: all 0.2s;
+        }
+        .form-row input:focus, .form-row textarea:focus, .form-row select:focus {
+            outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+        .form-row textarea { resize: vertical; min-height: 60px; }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ===== Export Modal ===== */
+        .export-mode-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .export-mode-opt {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border: 2px solid var(--border-light); border-radius: var(--radius-md);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .export-mode-opt:hover { border-color: var(--primary-light); background: var(--primary-lighter); }
+        .export-mode-opt.selected { border-color: var(--primary-color); background: var(--primary-lighter); }
+        .export-mode-opt input[type="radio"] { accent-color: var(--primary-color); margin-top: 2px; }
+        .export-mode-opt .opt-body { flex: 1; }
+        .export-mode-opt .opt-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .export-mode-opt .opt-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        .export-path-options { display: flex; gap: 10px; margin-bottom: 10px; }
+        .path-opt {
+            flex: 1; padding: 10px 14px; border: 2px solid var(--border-light);
+            border-radius: var(--radius-sm); cursor: pointer; text-align: center;
+            font-size: 13px; transition: all 0.15s;
+        }
+        .path-opt:hover { border-color: var(--primary-light); background: var(--primary-lighter); }
+        .path-opt.selected { border-color: var(--primary-color); background: var(--primary-lighter); color: var(--primary-color); font-weight: 600; }
+
+        .path-shortcuts { display: flex; gap: 8px; margin-bottom: 8px; }
+        .path-shortcut {
+            padding: 4px 10px; font-size: 12px; border: 1px solid var(--border-color);
+            border-radius: 4px; background: var(--bg-striped); color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .path-shortcut:hover { background: var(--primary-lighter); color: var(--primary-color); border-color: var(--primary-light); }
+
+        .custom-path-input { margin-bottom: 12px; }
+        .custom-path-input label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; display: block; }
+        .custom-path-input .input-row { display: flex; gap: 8px; }
+        .custom-path-input input { flex: 1; }
+
+        .export-filename-input { margin-bottom: 12px; }
+        .export-filename-input label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; display: block; }
+        .export-filename-input input { font-size: 14px; }
+
+        .export-desc {
+            font-size: 12px; color: var(--text-muted); padding: 8px 12px;
+            background: var(--bg-striped); border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm); word-break: break-all; margin-bottom: 4px;
+        }
+
+        /* ===== Import Modal ===== */
+        .import-drop-zone {
+            border: 2px dashed var(--border-color); border-radius: var(--radius-md);
+            padding: 32px 20px; text-align: center; cursor: pointer;
+            transition: all 0.2s; background: var(--bg-page);
+        }
+        .import-drop-zone:hover, .import-drop-zone.drag-over {
+            border-color: var(--primary-color); background: var(--primary-lighter);
+        }
+        .import-drop-zone .dz-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+        .import-drop-zone .dz-text { font-size: 13px; color: var(--text-secondary); }
+        .import-drop-zone .dz-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .import-status { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 10px; display: none; }
+        .import-status.show { display: block; }
+        .import-status.info { background: var(--info-soft); color: var(--info-color); border: 1px solid var(--info-color); }
+        .import-status.success { background: var(--success-soft); color: var(--success-color); border: 1px solid var(--success-color); }
+        .import-status.error { background: var(--danger-soft); color: var(--danger-color); border: 1px solid var(--danger-color); }
+
+        .price-preview-section { margin-top: 16px; display: none; }
+        .price-preview-section.show { display: block; }
+        .price-preview-section hr { border: none; border-top: 1px solid var(--border-light); margin: 12px 0; }
+        .price-preview-title { font-weight: 600; font-size: 13px; color: var(--text-primary); margin-bottom: 8px; }
+        .price-preview-table-wrap { max-height: 360px; overflow: auto; border: 1px solid var(--border-light); border-radius: var(--radius-sm); margin-bottom: 10px; }
+        .price-preview-table-wrap table { font-size: 12px; }
+        .price-preview-table-wrap td { padding: 6px 10px; vertical-align: middle; }
+        .price-match-input { width: 90px; padding: 4px 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 3px; text-align: right; font-family: inherit; }
+        .price-match-input.matched { background: var(--success-soft); border-color: var(--success-color); color: var(--success-color); }
+        .price-match-info { font-size: 12px; color: var(--success-color); margin-top: 2px; }
+        .price-preview-actions { text-align: right; display: flex; gap: 8px; justify-content: flex-end; }
+
+        /* ===== Logs Modal ===== */
+        .logs-modal .modal { width: 98vw; max-width: 1400px; }
+        .logs-filter { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+        .logs-filter input { padding: 6px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); flex: 1; min-width: 200px; }
+        .logs-table-wrap { max-height: calc(90vh - 200px); overflow: auto; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+        .logs-table-wrap table { font-size: 12px; }
+        .logs-table-wrap thead th { font-size: 11px; padding: 8px 10px; }
+        .logs-table-wrap td { padding: 6px 10px; vertical-align: top; }
+        .logs-table-wrap td:last-child { text-align: left; word-break: break-word; font-size: 12px; }
+        .log-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+        .log-badge.create { background: var(--success-soft); color: var(--success-color); }
+        .log-badge.update { background: var(--primary-soft); color: var(--primary-color); }
+        .log-badge.delete { background: var(--danger-soft); color: var(--danger-color); }
+        .log-badge.import { background: var(--info-soft); color: var(--info-color); }
+        .log-badge.export { background: var(--warning-soft); color: var(--warning-color); }
+        .log-badge.dedup { background: #f3e8ff; color: #7c3aed; }
+        .log-badge.clear { background: var(--danger-soft); color: var(--danger-color); }
+
+        /* ===== Dedup Modal ===== */
+        .dedup-info { padding: 10px 14px; background: var(--info-soft); color: var(--info-color); border: 1px solid var(--info-color); border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 12px; }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed; bottom: 30px; right: 30px; z-index: 300;
+            padding: 12px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500;
+            box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease; max-width: 360px; display: none;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: var(--success-color); color: white; }
+        .toast.error { background: var(--danger-color); color: white; }
+        .toast.info { background: var(--primary-color); color: white; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== Selected Preview Modal ===== */
+        .preview-info-box { font-size: 13px; padding: 8px 12px; background: var(--info-soft); color: var(--info-color); border: 1px solid var(--info-color); border-radius: var(--radius-sm); margin-bottom: 12px; }
+        .preview-table-wrap { max-height: 400px; overflow: auto; border: 1px solid var(--border-light); border-radius: var(--radius-sm); margin-bottom: 12px; }
+        .preview-table-wrap table { font-size: 12px; }
+        .preview-table-wrap td { padding: 6px 10px; vertical-align: middle; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 900px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .header-right { margin-left: 0; }
+            .stats-bar { flex-direction: column; gap: 8px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .toolbar-right { margin-left: 0; flex-direction: column; }
+            .search-box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">
+            <span class="icon">⚡</span>
+            HJSYSTEM
+        </div>
+        <span class="version-badge">V2.0</span>
+        <div class="header-right">
+            <div class="online-badge">
+                <span id="onlineCount">0</span> 人在线
+            </div>
+            <div class="user-info" id="userInfo">加载中...</div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索名称 / 型号 / 备注..." oninput="onSearchChange()">
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">+ 新增</button>
+        <button class="btn btn-secondary" onclick="openImportModal()">📥 导入</button>
+        <button class="btn btn-secondary" onclick="openExportModal()">📤 导出</button>
+        <div class="toolbar-divider"></div>
+        <button class="btn btn-info" onclick="openDedupModal()">⊜ 去重</button>
+        <button class="btn btn-secondary" onclick="openLogsModal()">📋 日志</button>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-right">
+            <button class="btn btn-success" id="previewBtn" onclick="openPreviewModal()" disabled>☑ 已选 <span id="selectedCount">0</span> 条</button>
+            <button class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" disabled>🗑 删除选中</button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="card">
+            <div class="table-container" id="tableContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                            <th style="width:52px;">序号</th>
+                            <th>名称</th>
+                            <th>型号及规格</th>
+                            <th style="width:80px;">数量</th>
+                            <th style="width:100px;">单价</th>
+                            <th style="width:110px;">小计</th>
+                            <th>备注</th>
+                            <th style="width:140px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="componentTable">
+                        <tr><td colspan="9" class="empty-state">
+                            <div class="icon">📦</div>
+                            <div>暂无元器件数据</div>
+                            <div class="hint">点击"新增"或"导入"添加数据</div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <span id="statusText">就绪</span>
+        <span style="margin-left:auto; color:var(--text-muted); font-size:12px;" id="lastRefresh"></span>
+    </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none;">
+
+<!-- ============ Add/Edit Modal ============ -->
+<div class="modal-backdrop" id="formModal">
+    <div class="modal" style="width:480px;">
+        <div class="modal-header">
+            <h3 id="formModalTitle">新增元器件</h3>
+            <button class="modal-close" onclick="closeFormModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-id">
+            <div class="form-row">
+                <label>名称 *</label>
+                <input type="text" id="f-name" placeholder="请输入元器件名称">
+            </div>
+            <div class="form-row">
+                <label>型号 / 规格</label>
+                <input type="text" id="f-model" placeholder="如：10kΩ 1/4W 0805">
+            </div>
+            <div class="form-grid-2">
+                <div class="form-row">
+                    <label>数量</label>
+                    <input type="number" id="f-quantity" value="1" min="1">
+                </div>
+                <div class="form-row">
+                    <label>单价 (¥)</label>
+                    <input type="number" id="f-unitprice" value="0" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="form-row">
+                <label>备注</label>
+                <textarea id="f-remarks" placeholder="可选"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeFormModal()">取消</button>
+            <button class="btn btn-primary" onclick="submitForm()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ Export Modal ============ -->
+<div class="modal-backdrop" id="exportModal">
+    <div class="modal" style="width:560px;">
+        <div class="modal-header">
+            <h3>导出元器件数据</h3>
+            <button class="modal-close" onclick="closeExportModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <!-- Export Mode -->
+            <div style="margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">导出方式</div>
+                <div class="export-mode-options">
+                    <label class="export-mode-opt selected" id="opt-selected" onclick="selectExportMode('selected')">
+                        <input type="radio" name="exportMode" value="selected" checked>
+                        <div class="opt-body">
+                            <div class="opt-title">📋 导出已选中的 <span id="exportSelCount">0</span> 条</div>
+                            <div class="opt-desc">将选中的元器件导出为「原材料清单明细表」</div>
+                        </div>
+                    </label>
+                    <label class="export-mode-opt" id="opt-price" onclick="selectExportMode('price')">
+                        <input type="radio" name="exportMode" value="price">
+                        <div class="opt-body">
+                            <div class="opt-title">💰 核价导出（外购仪器设备）</div>
+                            <div class="opt-desc">自定义名称，导出为「外购仪器设备——XXX」格式</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Price Mode: User Name Input -->
+            <div id="priceNameSection" style="display:none; margin-bottom:12px;">
+                <div class="form-row" style="margin-bottom:0;">
+                    <label>导出名称（生成文件名用）</label>
+                    <input type="text" id="priceExportName" placeholder="例如：张三、李四、部门名称...">
+                </div>
+            </div>
+
+            <!-- Path Options -->
+            <div style="margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">保存位置</div>
+                <div class="export-path-options">
+                    <div class="path-opt selected" id="path-desktop" onclick="selectPath('desktop')">💻 桌面</div>
+                    <div class="path-opt" id="path-custom" onclick="selectPath('custom')">📁 自定义路径</div>
+                </div>
+                <div id="customPathSection" style="display:none;">
+                    <div class="path-shortcuts">
+                        <span class="path-shortcut" onclick="setCustomPath('desktop')">桌面</span>
+                        <span class="path-shortcut" onclick="setCustomPath('documents')">文档</span>
+                        <span class="path-shortcut" onclick="setCustomPath('downloads')">下载</span>
+                    </div>
+                    <input type="text" id="customPathInput" placeholder="输入完整路径，如 D:\exports" style="width:100%;padding:7px 12px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;">
+                </div>
+            </div>
+
+            <!-- Filename Preview -->
+            <div class="export-desc" id="exportDesc"></div>
+            <div id="exportError" style="font-size:12px;color:var(--danger-color);margin-top:6px;display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeExportModal()">取消</button>
+            <button class="btn btn-success" onclick="doExport()" id="exportBtn">📥 保存到本机</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ Import Modal ============ -->
+<div class="modal-backdrop" id="importModal">
+    <div class="modal" style="width:580px;">
+        <div class="modal-header">
+            <h3>导入元器件数据</h3>
+            <button class="modal-close" onclick="closeImportModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="import-drop-zone" id="importDropZone">
+                <div class="dz-icon">📁</div>
+                <div class="dz-text">点击选择 Excel 文件 或 拖拽到此处</div>
+                <div class="dz-sub">支持 .xlsx 和 .xls 格式，自动识别内部空格</div>
+            </div>
+            <input type="file" id="importModalFile" accept=".xlsx,.xls" style="display:none;">
+            <div class="import-status" id="importStatus"></div>
+
+            <!-- Price Match Preview -->
+            <div class="price-preview-section" id="pricePreviewSection">
+                <hr>
+                <div class="price-preview-title">⚡ 自动核价预览</div>
+                <div id="pricePreviewInfo" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"></div>
+                <div class="price-preview-table-wrap" id="pricePreviewWrap"></div>
+                <div class="price-preview-actions">
+                    <button class="btn btn-secondary" onclick="skipPriceMatch()">跳过核价，直接导入</button>
+                    <button class="btn btn-success" onclick="confirmPriceMatch()">✅ 确认并导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ Dedup Modal ============ -->
+<div class="modal-backdrop" id="dedupModal">
+    <div class="modal" style="width:440px;">
+        <div class="modal-header">
+            <h3>按型号及规格去重</h3>
+            <button class="modal-close" onclick="closeDedupModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="dedup-info">
+                按 <strong>型号及规格</strong> 列进行去重，相同型号仅保留最早（ID最小）的一条记录，其余重复项将被 <strong style="color:var(--danger-color);">永久删除</strong>。
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary);">
+                此操作 <strong style="color:var(--danger-color);">不可撤销</strong>，确认继续？
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDedupModal()">取消</button>
+            <button class="btn btn-warning" onclick="doDedup()">⚠ 确认去重</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ Logs Modal ============ -->
+<div class="modal-backdrop logs-modal" id="logsModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>操作日志</h3>
+            <button class="modal-close" onclick="closeLogsModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="logs-filter">
+                <input type="text" id="logSearchInput" placeholder="搜索操作详情..." oninput="filterLogs()">
+                <button class="btn btn-secondary" onclick="loadLogs()">🔄 刷新</button>
+                <button class="btn btn-danger" onclick="clearLogs()" style="margin-left:auto;">🗑 清空日志</button>
+            </div>
+            <div class="logs-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:90px;">时间</th>
+                            <th style="width:70px;">操作</th>
+                            <th>详情</th>
+                            <th style="width:100px;">用户IP</th>
+                            <th style="width:130px;">电脑名称</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTable">
+                        <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ Toast ============ -->
+<div class="toast" id="toast"></div>
+
+<script>
+    /* ================= Config ================= */
+    const API = window.location.origin;
+
+    /* ================= State ================= */
+    let allData = [];
+    let filteredData = [];
+    let selectedIds = new Set();
+    let isLoading = false;
+    let currentLogData = [];
+    let currentLogFilter = '';
+    let exportMode = 'selected';
+    let savePathType = 'desktop';
+    let pendingExcelRawRows = null; // 核价用原始Excel行数据
+
+    /* ================= Auth ================= */
+    function getToken() { return sessionStorage.getItem('hj_token') || ''; }
+    function authHeaders() {
+        const h = { 'Content-Type': 'application/json' };
+        const token = getToken();
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        return h;
+    }
+    async function checkAuth() {
+        try {
+            const r = await fetch(API + '/api/user', { headers: authHeaders() });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            if (!d.logged_in) throw new Error();
+            const user = d.user || d;
+            document.getElementById('userInfo').textContent = user.display_name || user.username || '访客';
+        } catch (e) {
+            window.location.href = '/login.html';
+        }
+    }
+
+    /* ================= Toast ================= */
+    let toastTimer = null;
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type;
+        t.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    /* ================= Init ================= */
+    (async function init() {
+        await checkAuth();
+        await loadStatus();
+        await loadData();
+        setInterval(loadStatus, 8000);
+        setInterval(sendHeartbeat, 30000);
+    })();
+
+    async function sendHeartbeat() {
+        if (!getToken()) return;
+        fetch(API + '/api/heartbeat', { method: 'POST', headers: authHeaders(), body: '{}' }).catch(() => {});
+    }
+
+    /* ================= Status ================= */
+    async function loadStatus() {
+        try {
+            const r = await fetch(API + '/api/status');
+            if (r.ok) {
+                const d = await r.json();
+                const onlineEl = document.getElementById('onlineCount');
+                if (onlineEl) onlineEl.textContent = d.online_users || 0;
+            }
+        } catch (e) {}
+    }
+
+    /* ================= Load Data ================= */
+    async function loadData() {
+        if (isLoading) return;
+        isLoading = true;
+        setStatus('加载中...');
+        try {
+            const r = await fetch(API + '/api/components?page=1&page_size=500000', { headers: authHeaders() });
+            if (!r.ok) throw new Error('加载失败');
+            const d = await r.json();
+            allData = d.items || [];
+            filteredData = [...allData];
+            selectedIds.clear();
+            renderTable();
+            updateStats();
+            updateBottomBar();
+        } catch (e) {
+            showToast('加载数据失败: ' + e.message, 'error');
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    function updateStats() {
+        let qty = 0, val = 0;
+        allData.forEach(it => { qty += Number(it.quantity) || 0; val += Number(it.subtotal) || 0; });
+        const qtyEl = document.getElementById('totalQty');
+        const valEl = document.getElementById('totalValue');
+        if (qtyEl) qtyEl.textContent = qty;
+        if (valEl) valEl.textContent = '¥' + val.toFixed(2);
+    }
+
+    /* ================= Render Table ================= */
+    function renderTable() {
+        const tbody = document.getElementById('componentTable');
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">📦</div><div>暂无元器件数据</div><div class="hint">点击"新增"或"导入"添加数据</div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = filteredData.map(it => {
+            const qty = Number(it.quantity) || 0;
+            const price = Number(it.unit_price) || 0;
+            const sub = Number(it.subtotal) || qty * price;
+            const chk = selectedIds.has(it.id) ? 'checked' : '';
+            const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            return `<tr>
+                <td><input type="checkbox" class="row-cb" ${chk} onchange="toggleRow(${it.id})"></td>
+                <td class="td-seq">${it.sequence || it.id}</td>
+                <td class="td-name">${safe(it.name)}</td>
+                <td class="td-model">${safe(it.model)}</td>
+                <td class="td-qty">${qty}</td>
+                <td class="td-price">¥${price.toFixed(2)}</td>
+                <td class="td-subtotal">¥${sub.toFixed(2)}</td>
+                <td class="td-remarks">${safe(it.remarks)}</td>
+                <td class="td-actions">
+                    <button class="action-btn-sm" onclick="editComponent(${it.id})">编辑</button>
+                    <button class="action-btn-sm danger" onclick="deleteComponent(${it.id})">删除</button>
+                </td>
+            </tr>`;
+        }).join('');
+        updateSelectAll();
+    }
+
+    /* ================= Search ================= */
+    let searchTimer = null;
+    function onSearchChange() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(async () => {
+            const kw = document.getElementById('searchInput').value.trim();
+            if (!kw) {
+                filteredData = [...allData];
+                selectedIds.clear();
+                renderTable();
+                updateBottomBar();
+                return;
+            }
+            setStatus('搜索中...');
+            try {
+                const r = await fetch(API + '/api/components?page=1&page_size=500000&search=' + encodeURIComponent(kw), { headers: authHeaders() });
+                if (!r.ok) throw new Error();
+                const d = await r.json();
+                filteredData = d.items || [];
+                selectedIds.clear();
+                renderTable();
+                updateBottomBar();
+            } catch (e) {
+                showToast('搜索失败', 'error');
+            }
+        }, 300);
+    }
+
+    /* ================= Selection ================= */
+    function toggleRow(id) {
+        if (selectedIds.has(id)) selectedIds.delete(id);
+        else selectedIds.add(id);
+        updateSelectedUI();
+        updateSelectAll();
+    }
+
+    function toggleSelectAll() {
+        const cb = document.getElementById('selectAll');
+        if (cb.checked) filteredData.forEach(it => selectedIds.add(it.id));
+        else selectedIds.clear();
+        document.querySelectorAll('#componentTable .row-cb').forEach(el => { if (el.id !== 'selectAll') el.checked = cb.checked; });
+        updateSelectedUI();
+    }
+
+    function updateSelectAll() {
+        const cbs = document.querySelectorAll('#componentTable .row-cb');
+        const checked = document.querySelectorAll('#componentTable .row-cb:checked');
+        const allCb = document.getElementById('selectAll');
+        allCb.checked = cbs.length > 0 && checked.length === cbs.length;
+        allCb.indeterminate = checked.length > 0 && checked.length < cbs.length;
+    }
+
+    function updateSelectedUI() {
+        const cnt = selectedIds.size;
+        document.getElementById('selectedCount').textContent = cnt;
+        document.getElementById('exportSelCount').textContent = cnt;
+        const hasSel = cnt > 0;
+        document.getElementById('previewBtn').disabled = !hasSel;
+        document.getElementById('deleteSelectedBtn').disabled = !hasSel;
+        updateExportDesc();
+    }
+
+    /* ================= Bottom Bar ================= */
+    function updateBottomBar() {
+        const selCnt = selectedIds.size;
+        if (selCnt > 0) {
+            let selQty = 0, selVal = 0;
+            allData.filter(it => selectedIds.has(it.id)).forEach(it => {
+                selQty += Number(it.quantity) || 0;
+                selVal += Number(it.subtotal) || 0;
+            });
+            setStatus(`已选 ${selCnt} 条 | 数量 ${selQty} | 价值 ¥${selVal.toFixed(2)}`);
+        } else {
+            setStatus(`共 ${filteredData.length} 条数据`);
+        }
+        document.getElementById('lastRefresh').textContent = '刷新: ' + new Date().toLocaleTimeString();
+    }
+
+    function setStatus(text) { document.getElementById('statusText').textContent = text; }
+
+    /* ================= Add / Edit ================= */
+    let editTargetId = null;
+
+    function openAddModal() {
+        editTargetId = null;
+        document.getElementById('formModalTitle').textContent = '新增元器件';
+        document.getElementById('edit-id').value = '';
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-model').value = '';
+        document.getElementById('f-quantity').value = '1';
+        document.getElementById('f-unitprice').value = '0';
+        document.getElementById('f-remarks').value = '';
+        document.getElementById('formModal').classList.add('active');
+    }
+
+    async function editComponent(id) {
+        try {
+            const r = await fetch(API + '/api/components/' + id, { headers: authHeaders() });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            editTargetId = id;
+            document.getElementById('formModalTitle').textContent = '编辑元器件';
+            document.getElementById('edit-id').value = id;
+            document.getElementById('f-name').value = d.name || '';
+            document.getElementById('f-model').value = d.model || '';
+            document.getElementById('f-quantity').value = d.quantity || 1;
+            document.getElementById('f-unitprice').value = d.unit_price || 0;
+            document.getElementById('f-remarks').value = d.remarks || '';
+            document.getElementById('formModal').classList.add('active');
+        } catch (e) {
+            showToast('获取数据失败', 'error');
+        }
+    }
+
+    function closeFormModal() { document.getElementById('formModal').classList.remove('active'); editTargetId = null; }
+
+    async function submitForm() {
+        const name = document.getElementById('f-name').value.trim();
+        if (!name) { showToast('请填写名称', 'error'); return; }
+        const payload = {
+            name,
+            model: document.getElementById('f-model').value.trim(),
+            quantity: parseInt(document.getElementById('f-quantity').value) || 1,
+            unit_price: parseFloat(document.getElementById('f-unitprice').value) || 0,
+            remarks: document.getElementById('f-remarks').value.trim()
+        };
+        try {
+            let r;
+            if (editTargetId) {
+                r = await fetch(API + '/api/components/' + editTargetId, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload) });
+            } else {
+                r = await fetch(API + '/api/components', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+            }
+            if (!r.ok) throw new Error();
+            closeFormModal();
+            await loadData();
+            showToast(editTargetId ? '已更新' : '已新增');
+        } catch (e) {
+            showToast('保存失败', 'error');
+        }
+    }
+
+    async function deleteComponent(id) {
+        if (!confirm('确认删除此元器件？')) return;
+        try {
+            const r = await fetch(API + '/api/components/' + id, { method: 'DELETE', headers: authHeaders() });
+            if (!r.ok) throw new Error();
+            selectedIds.delete(id);
+            await loadData();
+            showToast('已删除');
+        } catch (e) { showToast('删除失败', 'error'); }
+    }
+
+    async function deleteSelected() {
+        const ids = [...selectedIds];
+        if (ids.length === 0) return;
+        if (!confirm('确认删除选中的 ' + ids.length + ' 条元器件？')) return;
+        let ok = 0, fail = 0;
+        for (const id of ids) {
+            try {
+                const r = await fetch(API + '/api/components/' + id, { method: 'DELETE', headers: authHeaders() });
+                if (r.ok) ok++; else fail++;
+            } catch (e) { fail++; }
+        }
+        selectedIds.clear();
+        await loadData();
+        showToast('已删除 ' + ok + ' 条' + (fail ? '，失败 ' + fail : ''), fail > 0 ? 'error' : 'success');
+    }
+
+    /* ================= Export ================= */
+    function openExportModal() {
+        exportMode = 'selected';
+        savePathType = 'desktop';
+        document.getElementById('priceNameSection').style.display = 'none';
+        document.getElementById('customPathSection').style.display = 'none';
+        document.getElementById('customPathInput').value = '';
+        document.getElementById('priceExportName').value = '';
+        document.getElementById('exportError').style.display = 'none';
+        document.getElementById('opt-selected').classList.add('selected');
+        document.getElementById('opt-price').classList.remove('selected');
+        document.getElementById('path-desktop').classList.add('selected');
+        document.getElementById('path-custom').classList.remove('selected');
+        document.querySelector('input[name="exportMode"][value="selected"]').checked = true;
+        updateSelectedUI();
+        document.getElementById('exportModal').classList.add('active');
+    }
+
+    function closeExportModal() { document.getElementById('exportModal').classList.remove('active'); }
+
+    function selectExportMode(mode) {
+        exportMode = mode;
+        document.querySelectorAll('.export-mode-opt').forEach(el => el.classList.remove('selected'));
+        document.getElementById('opt-' + mode).classList.add('selected');
+        document.querySelector('input[name="exportMode"][value="' + mode + '"]').checked = true;
+        document.getElementById('priceNameSection').style.display = mode === 'price' ? 'block' : 'none';
+        if (mode === 'price') {
+            document.getElementById('priceExportName').focus();
+        }
+        updateExportDesc();
+    }
+
+    function selectPath(type) {
+        savePathType = type;
+        document.getElementById('path-desktop').classList.toggle('selected', type === 'desktop');
+        document.getElementById('path-custom').classList.toggle('selected', type === 'custom');
+        document.getElementById('customPathSection').style.display = type === 'custom' ? 'block' : 'none';
+        updateExportDesc();
+    }
+
+    function setCustomPath(type) {
+        const paths = {
+            desktop: 'C:\\Users\\' + (location.hostname || 'User') + '\\Desktop',
+            documents: 'C:\\Users\\' + (location.hostname || 'User') + '\\Documents',
+            downloads: 'C:\\Users\\' + (location.hostname || 'User') + '\\Downloads'
+        };
+        document.getElementById('customPathInput').value = paths[type] || '';
+        updateExportDesc();
+    }
+
+    function getDateStr() {
+        const d = new Date();
+        return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    }
+
+    function updateExportDesc() {
+        const date = getDateStr();
+        const desc = document.getElementById('exportDesc');
+        if (exportMode === 'selected') {
+            const selCount = selectedIds.size;
+            if (savePathType === 'desktop') {
+                desc.textContent = `📁 保存到桌面：${date}原材料清单明细表.xlsx`;
+            } else {
+                const custom = document.getElementById('customPathInput').value.trim();
+                const basePath = custom || '[自定义路径]';
+                desc.textContent = `📁 ${basePath}\\${date}原材料清单明细表.xlsx`;
+            }
+        } else {
+            const name = document.getElementById('priceExportName').value.trim() || 'XXX';
+            if (savePathType === 'desktop') {
+                desc.textContent = `📁 保存到桌面：${date}外购仪器设备——${name}.xlsx`;
+            } else {
+                const custom = document.getElementById('customPathInput').value.trim();
+                const basePath = custom || '[自定义路径]';
+                desc.textContent = `📁 ${basePath}\\${date}外购仪器设备——${name}.xlsx`;
+            }
+        }
+    }
+
+    document.getElementById('priceExportName').addEventListener('input', updateExportDesc);
+    document.getElementById('customPathInput').addEventListener('input', updateExportDesc);
+
+    async function doExport() {
+        const date = getDateStr();
+        let data = [];
+
+        if (exportMode === 'selected') {
+            data = allData.filter(it => selectedIds.has(it.id));
+            if (data.length === 0) {
+                document.getElementById('exportError').textContent = '请先在列表中勾选要导出的元器件';
+                document.getElementById('exportError').style.display = 'block';
+                return;
+            }
+        }
+
+        document.getElementById('exportError').style.display = 'none';
+        const title = exportMode === 'selected' ? '原材料清单明细表' : ('外购仪器设备——' + (document.getElementById('priceExportName').value.trim() || 'XXX'));
+        const diskFileName = exportMode === 'selected' ? date + '原材料清单明细表' : date + '外购仪器设备——' + document.getElementById('priceExportName').value.trim();
+
+        const payload = {
+            title,
+            diskFileName,
+            data: data.map(it => ({
+                序号: it.sequence || it.id,
+                名称: it.name || '',
+                型号及规格: it.model || '',
+                数量: it.quantity || 0,
+                单价: it.unit_price || 0,
+                备注: it.remarks || ''
+            }))
+        };
+
+        if (savePathType === 'desktop') {
+            // 浏览器直接下载
+            try {
+                const r = await fetch(API + '/api/export-to-file', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!r.ok) throw new Error('导出失败');
+                const ct = r.headers.get('Content-Type') || '';
+                if (ct.includes('application/json')) {
+                    const d = await r.json();
+                    showToast(d.message || '导出成功', 'success');
+                } else {
+                    const blob = await r.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = diskFileName + '.xlsx';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('导出成功！', 'success');
+                }
+                closeExportModal();
+            } catch (e) {
+                showToast('导出失败: ' + e.message, 'error');
+            }
+        } else {
+            // 自定义路径模式（通过后端保存到指定路径）
+            const customPath = document.getElementById('customPathInput').value.trim();
+            if (!customPath) {
+                document.getElementById('exportError').textContent = '请输入自定义保存路径';
+                document.getElementById('exportError').style.display = 'block';
+                return;
+            }
+            try {
+                const r = await fetch(API + '/api/export-to-file', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ ...payload, savePath: customPath })
+                });
+                if (!r.ok) throw new Error('导出失败');
+                const d = await r.json();
+                showToast(d.message || '已保存到: ' + customPath, 'success');
+                closeExportModal();
+            } catch (e) {
+                showToast('导出失败: ' + e.message, 'error');
+            }
+        }
+    }
+
+    /* ================= Import + Price Match ================= */
+    function openImportModal() {
+        pendingExcelRawRows = null;
+        document.getElementById('importStatus').className = 'import-status';
+        document.getElementById('importStatus').style.display = 'none';
+        document.getElementById('pricePreviewSection').classList.remove('show');
+        document.getElementById('importModal').classList.add('active');
+    }
+    function closeImportModal() { document.getElementById('importModal').classList.remove('active'); pendingExcelRawRows = null; }
+
+    const dropZone = document.getElementById('importDropZone');
+    dropZone.addEventListener('click', () => document.getElementById('importModalFile').click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault(); dropZone.classList.remove('drag-over');
+        const f = e.dataTransfer.files[0];
+        if (f) processImportFile(f);
+    });
+
+    document.getElementById('importModalFile').addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) processImportFile(f);
+        e.target.value = '';
+    });
+
+    async function processImportFile(file) {
+        const status = document.getElementById('importStatus');
+        status.className = 'import-status show info';
+        status.textContent = '正在解析 Excel 文件...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const r = await fetch(API + '/api/components/import', {
+                method: 'POST',
+                headers: getToken() ? { 'Authorization': 'Bearer ' + getToken() } : {},
+                body: formData
+            });
+            const result = await r.json();
+            if (!r.ok) throw new Error(result.detail || '导入失败');
+
+            status.className = 'import-status show success';
+            status.textContent = `导入完成：新增 ${result.imported || 0} 条，跳过 ${result.skipped || 0} 条`;
+
+            // 核价预览：用 ExcelJS 解析原始文件并匹配单价
+            await doPriceMatchPreview(file);
+
+        } catch (e) {
+            status.className = 'import-status show error';
+            status.textContent = '导入失败: ' + e.message;
+        }
+    }
+
+    async function doPriceMatchPreview(file) {
+        const status = document.getElementById('importStatus');
+        // 解析 Excel 文件中的"备注/说明"列，与数据库匹配单价
+        // 使用 SheetJS (xlsx.full.min.js) 解析原始文件
+        if (typeof XLSX === 'undefined') {
+            // 尝试加载 xlsx.js 库
+            await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = '/static/xlsx.full.min.js';
+                s.onload = resolve;
+                s.onerror = () => {
+                    // 库不存在，直接跳过核价
+                    status.textContent += '（核价预览不可用，刷新页面以使用全部功能）';
+                    setTimeout(() => { closeImportModal(); loadData(); }, 2000);
+                    reject(new Error('xlsx lib not found'));
+                };
+                document.head.appendChild(s);
+            });
+        }
+
+        try {
+            const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            if (rows.length < 2) throw new Error('Excel 文件无数据');
+
+            const headers = (rows[0] || []).map((h, i) => ({ name: String(h || '').trim().replace(/\s+/g, ''), index: i }));
+
+            const nameIdx = headers.find(h => ['名称', '名\u3000\u3000称'].includes(h.name))?.index ?? -1;
+            const modelIdx = headers.find(h => ['型号及规格', '型号'].includes(h.name))?.index ?? -1;
+            const remarkIdx = headers.find(h => ['备注', '说明', 'remark', 'remark'].includes(h.name))?.index ?? -1;
+            const priceIdx = headers.find(h => ['单价', '价格'].includes(h.name))?.index ?? -1;
+
+            const dataRows = rows.slice(1).filter(r => r.length > 0);
+
+            // 构建数据库 lookup: model -> unit_price
+            const dbLookup = {};
+            allData.forEach(it => {
+                if (it.model) dbLookup[it.model.toLowerCase()] = Number(it.unit_price) || 0;
+            });
+
+            // 找出需要匹配的行（备注有值但单价为0的）
+            const previewRows = [];
+            let matchedCount = 0;
+
+            for (const row of dataRows) {
+                const remark = String(row[remarkIdx] || '').trim();
+                const model = String(row[modelIdx] || '').trim();
+                const existingPrice = Number(row[priceIdx]) || 0;
+
+                let matchedPrice = 0, matchSource = '';
+                if (existingPrice > 0) {
+                    matchedPrice = existingPrice;
+                    matchSource = '原文件';
+                } else if (remark && dbLookup[remark.toLowerCase()] !== undefined) {
+                    matchedPrice = dbLookup[remark.toLowerCase()];
+                    matchSource = '备注匹配: ' + remark;
+                } else if (model && dbLookup[model.toLowerCase()] !== undefined) {
+                    matchedPrice = dbLookup[model.toLowerCase()];
+                    matchSource = '型号匹配: ' + model;
+                }
+
+                if (matchedPrice > 0) {
+                    matchedCount++;
+                    previewRows.push({
+                        name: String(row[nameIdx] || '').trim(),
+                        model: model,
+                        remark: remark,
+                        originalPrice: existingPrice,
+                        matchedPrice,
+                        matchSource
+                    });
+                }
+            }
+
+            if (previewRows.length === 0) {
+                status.className = 'import-status show info';
+                status.textContent += '（无可自动匹配的单价数据）';
+                setTimeout(() => { closeImportModal(); loadData(); }, 1500);
+                return;
+            }
+
+            // 渲染预览表格
+            const previewInfo = document.getElementById('pricePreviewInfo');
+            previewInfo.textContent = `检测到 ${previewRows.length} 行可匹配单价（基于备注/型号自动匹配）`;
+
+            const wrap = document.getElementById('pricePreviewWrap');
+            wrap.innerHTML = `<table>
+                <thead><tr>
+                    <th>名称</th><th>型号</th><th>备注</th>
+                    <th style="text-align:center;">原单价</th>
+                    <th style="text-align:center;">匹配单价</th>
+                    <th style="text-align:left;">匹配来源</th>
+                </tr></thead>
+                <tbody>${previewRows.map(r => {
+                    const safe = s => String(s || '').replace(/</g, '&lt;');
+                    return `<tr>
+                        <td>${safe(r.name)}</td>
+                        <td>${safe(r.model)}</td>
+                        <td>${safe(r.remark)}</td>
+                        <td style="text-align:center;">${r.originalPrice > 0 ? '¥' + r.originalPrice.toFixed(2) : '-'}</td>
+                        <td style="text-align:center;"><span class="price-match-input matched">¥${r.matchedPrice.toFixed(2)}</span></td>
+                        <td style="text-align:left;font-size:11px;color:var(--success-color);">${safe(r.matchSource)}</td>
+                    </tr>`;
+                }).join('')}</tbody></table>`;
+
+            pendingExcelRawRows = previewRows;
+            document.getElementById('pricePreviewSection').classList.add('show');
+
+        } catch (e) {
+            // 解析失败，跳过核价
+            status.textContent += '（核价预览不可用）';
+            setTimeout(() => { closeImportModal(); loadData(); }, 1500);
+        }
+    }
+
+    function skipPriceMatch() {
+        closeImportModal();
+        loadData();
+        showToast('导入完成', 'success');
+    }
+
+    function confirmPriceMatch() {
+        // 核价确认后，修改导入数据中的单价列，重新导入
+        if (!pendingExcelRawRows || pendingExcelRawRows.length === 0) {
+            skipPriceMatch();
+            return;
+        }
+        // 目前后端不支持修改单价（导入是追加模式）
+        // 提示用户核价结果，由用户决定是否手动更新
+        closeImportModal();
+        loadData();
+        showToast('核价预览完成，请确认数据后手动编辑单价', 'info');
+    }
+
+    /* ================= Dedup ================= */
+    function openDedupModal() { document.getElementById('dedupModal').classList.add('active'); }
+    function closeDedupModal() { document.getElementById('dedupModal').classList.remove('active'); }
+    async function doDedup() {
+        closeDedupModal();
+        setStatus('去重中...');
+        try {
+            const r = await fetch(API + '/api/components/dedup', { method: 'POST', headers: authHeaders() });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            await loadData();
+            showToast(`去重完成：删除了 ${d.deleted || 0} 条，保留了 ${d.remaining || 0} 条`, 'success');
+        } catch (e) { showToast('去重失败', 'error'); }
+    }
+
+    /* ================= Logs ================= */
+    function openLogsModal() {
+        currentLogData = [];
+        document.getElementById('logsModal').classList.add('active');
+        loadLogs();
+    }
+    function closeLogsModal() { document.getElementById('logsModal').classList.remove('active'); }
+    async function loadLogs() {
+        const tbody = document.getElementById('logsTable');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">加载中...</td></tr>';
+        try {
+            const r = await fetch(API + '/api/logs', { headers: authHeaders() });
+            if (!r.ok) throw new Error();
+            const logs = await r.json();
+            currentLogData = logs || [];
+            renderLogs();
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--danger-color);">加载失败</td></tr>';
+        }
+    }
+    function renderLogs() {
+        const kw = currentLogFilter.toLowerCase();
+        const logs = kw
+            ? currentLogData.filter(l => (l.details||'').toLowerCase().includes(kw) || (l.action||'').toLowerCase().includes(kw) || (l.user_ip||'').toLowerCase().includes(kw))
+            : currentLogData;
+        const tbody = document.getElementById('logsTable');
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">暂无日志记录</td></tr>';
+            return;
+        }
+        tbody.innerHTML = logs.slice(0, 200).map(l => {
+            const badge = `<span class="log-badge ${l.action || 'update'}">${l.action || '?'}</span>`;
+            const dt = l.created_at || '';
+            const date = dt.slice(5, 10);
+            const time = dt.slice(11, 16);
+            const safe = s => String(s || '').replace(/</g, '&lt;');
+            return `<tr>
+                <td>${date}<br><span style="font-size:11px;color:var(--text-muted);">${time}</span></td>
+                <td>${badge}</td>
+                <td style="text-align:left;">${safe(l.details || '')}</td>
+                <td>${safe(l.user_ip || '')}</td>
+                <td>${safe(l.computer_name || '-')}</td>
+            </tr>`;
+        }).join('');
+    }
+    function filterLogs() {
+        currentLogFilter = document.getElementById('logSearchInput').value.trim();
+        renderLogs();
+    }
+    async function clearLogs() {
+        if (!confirm('确认清空全部操作日志？此操作不可撤销！')) return;
+        try {
+            await fetch(API + '/api/logs', { method: 'DELETE', headers: authHeaders() });
+            currentLogData = [];
+            renderLogs();
+            showToast('日志已清空', 'success');
+        } catch (e) { showToast('清空失败', 'error'); }
+    }
+
+    /* ================= Selected Preview Modal ================= */
+    function openPreviewModal() {
+        if (selectedIds.size === 0) return;
+        const selItems = allData.filter(it => selectedIds.has(it.id));
+        let qty = 0, val = 0;
+        selItems.forEach(it => { qty += Number(it.quantity) || 0; val += Number(it.subtotal) || 0; });
+        const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const rows = selItems.map(it => `<tr>
+            <td><input type="checkbox" class="row-cb" checked onchange="removeFromPreview(${it.id})"></td>
+            <td class="td-seq">${it.sequence || it.id}</td>
+            <td class="td-name">${safe(it.name)}</td>
+            <td>${safe(it.model)}</td>
+            <td class="td-qty">${it.quantity || 0}</td>
+            <td class="td-price">¥${(Number(it.unit_price)||0).toFixed(2)}</td>
+            <td class="td-subtotal">¥${(Number(it.subtotal)||0).toFixed(2)}</td>
+            <td>${safe(it.remarks)}</td>
+        </tr>`).join('');
+
+        const existing = document.getElementById('previewModal');
+        if (existing) existing.remove();
+
+        const m = document.createElement('div');
+        m.className = 'modal-backdrop active';
+        m.id = 'previewModal';
+        m.innerHTML = `<div class="modal" style="width:98vw;max-width:1400px;">
+            <div class="modal-header">
+                <h3>已选中元器件预览</h3>
+                <button class="modal-close" onclick="document.getElementById('previewModal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-info-box">已选 <strong>${selectedIds.size}</strong> 条 | 数量合计: <strong>${qty}</strong> | 价值合计: <strong>¥${val.toFixed(2)}</strong></div>
+                <div class="preview-table-wrap">
+                    <table><thead><tr>
+                        <th style="width:40px;"></th>
+                        <th style="width:52px;">序号</th><th>名称</th><th>型号</th>
+                        <th>数量</th><th>单价</th><th>小计</th><th>备注</th>
+                    </tr></thead><tbody>${rows}</tbody></table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('previewModal').remove()">关闭</button>
+                <button class="btn btn-success" onclick="closePreviewAndExport()">📤 导出选中</button>
+                <button class="btn btn-danger" onclick="document.getElementById('previewModal').remove(); deleteSelected()">🗑 删除</button>
+            </div>
+        </div>`;
+        document.body.appendChild(m);
+        m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+    }
+
+    function removeFromPreview(id) {
+        selectedIds.delete(id);
+        updateSelectedUI();
+        openPreviewModal();
+    }
+
+    function closePreviewAndExport() {
+        document.getElementById('previewModal').remove();
+        exportMode = 'selected';
+        openExportModal();
+    }
+
+    /* ================= ESC to close ================= */
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeFormModal();
+            closeExportModal();
+            closeImportModal();
+            closeDedupModal();
+            closeLogsModal();
+            const pm = document.getElementById('previewModal');
+            if (pm) pm.remove();
+        }
+    });
+</script>
+</body>
+</html>

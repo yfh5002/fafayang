@@ -1,0 +1,40 @@
+# Ignore generated certificates and private keys
+ca.key
+key.pem
+cert.pem
+*.key
+*.pem
+
+# Node modules
+node_modules/
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+
+# Temporary files
+temp/
+__pycache__/
+*.pyc
+*.pyo
+
+# Database files
+*.db
+
+# Exported files
+exports/*.xlsx
+
+# VS Code
+.vscode/
+
+# Test output
+result.txt
+test_response.json
+venv_check.txt
+venv_err.txt
