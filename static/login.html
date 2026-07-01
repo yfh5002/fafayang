@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOGIN // HJSYSTEM</title>
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --neon-blue: #00d4ff;
+            --neon-cyan: #0affed;
+            --bg-deep: #0a0e14;
+            --bg-terminal: #0d1117;
+            --bg-card: rgba(13, 17, 23, 0.92);
+            --border-glow: rgba(0, 255, 65, 0.25);
+            --text-primary: #e6edf3;
+            --text-dim: #7d8590;
+            --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+            --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-mono);
+            background: var(--bg-deep);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========== Matrix Rain Canvas ========== */
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        /* ========== Grid Background Overlay ========== */
+        .grid-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            background:
+                linear-gradient(rgba(0,255,65,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,65,.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* ========== Scanline Effect ========== */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.06) 2px,
+                rgba(0, 0, 0, 0.06) 4px
+            );
+        }
+
+        /* ========== Floating Particles (algorithm nodes) ========== */
+        #particles-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        /* ========== Terminal Window ========== */
+        .terminal-wrapper {
+            position: relative;
+            z-index: 10;
+            animation: terminalFadeIn 0.8s ease-out;
+        }
+
+        @keyframes terminalFadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .terminal-window {
+            width: 440px;
+            max-width: 92vw;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            box-shadow:
+                0 0 60px rgba(0, 255, 65, 0.08),
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .terminal-window::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 11px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0,255,65,0.3), transparent 40%, transparent 60%, rgba(0,212,255,0.3));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* ========== Title Bar ========== */
+        .title-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.35);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.08);
+            user-select: none;
+        }
+
+        .title-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+        .title-dot:hover { filter: brightness(1.3); }
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green { background: #28c840; }
+
+        .title-text {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .title-version {
+            font-size: 10px;
+            color: rgba(0, 255, 65, 0.5);
+            padding: 2px 6px;
+            border: 1px solid rgba(0, 255, 65, 0.15);
+            border-radius: 3px;
+        }
+
+        /* ========== Terminal Body ========== */
+        .terminal-body {
+            padding: 28px 32px 24px;
+        }
+
+        /* ========== System Header ========== */
+        .sys-header {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 6px rgba(0,255,65,0.2)); }
+            50% { filter: drop-shadow(0 0 16px rgba(0,255,65,0.35)); }
+        }
+
+        .sys-icon {
+            font-size: 36px;
+            display: inline-block;
+            margin-bottom: 8px;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .sys-title {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.4), 0 0 40px rgba(0, 255, 65, 0.15);
+        }
+
+        .sys-subtitle {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 6px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .typing-line {
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid var(--neon-green);
+            animation: typing 2s steps(22) 0.5s forwards, blink 0.75s step-end infinite;
+            width: 0;
+            max-width: 220px;
+        }
+
+        @keyframes typing {
+            to { width: 220px; }
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        /* ========== Form Groups (Terminal Input Style) ========== */
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            color: var(--neon-cyan);
+            margin-bottom: 6px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: 12px;
+            font-size: 13px;
+            color: var(--neon-green);
+            opacity: 0.6;
+            font-weight: bold;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 11px 14px 11px 36px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0, 255, 65, 0.15);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input::placeholder {
+            color: rgba(125, 133, 144, 0.5);
+            font-style: italic;
+        }
+
+        .form-input:focus {
+            border-color: var(--neon-green);
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 65, 0.15),
+                0 0 20px rgba(0, 255, 65, 0.08),
+                inset 0 0 12px rgba(0, 255, 65, 0.04);
+        }
+
+        .form-input:focus + .input-prefix,
+        .form-input:focus ~ .input-prefix {
+            opacity: 1;
+        }
+
+        /* ========== Submit Button (Command Execution Style) ========== */
+        .btn-exec {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            background: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-exec:hover {
+            background: rgba(0, 255, 65, 0.08);
+            box-shadow: 0 0 24px rgba(0, 255, 65, 0.15), inset 0 0 20px rgba(0, 255, 65, 0.05);
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+        }
+
+        .btn-exec:active {
+            transform: scale(0.985);
+        }
+
+        /* Loading state — compile progress bar */
+        .btn-exec.loading {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            cursor: wait;
+            pointer-events: none;
+        }
+
+        .btn-exec.loading .btn-text {
+            opacity: 0;
+        }
+
+        .btn-exec .progress-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 12px;
+        }
+
+        .btn-exec.loading .progress-layer {
+            opacity: 1;
+        }
+
+        .progress-track {
+            flex: 1;
+            max-width: 160px;
+            height: 3px;
+            background: rgba(0, 255, 65, 0.12);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--neon-green);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--neon-green);
+            transition: width 0.1s linear;
+            animation: progressPulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { box-shadow: 0 0 4px var(--neon-green); }
+            50% { box-shadow: 0 0 12px var(--neon-green), 0 0 20px rgba(0,255,65,0.3); }
+        }
+
+        .spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(0, 255, 65, 0.2);
+            border-top-color: var(--neon-green);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Success state */
+        .btn-exec.success {
+            border-color: #28c840;
+            color: #28c840;
+            background: rgba(40, 200, 64, 0.08);
+        }
+
+        /* Error state */
+        .btn-exec.error {
+            border-color: #ff5f57;
+            color: #ff5f57;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* ========== Error Message ========== */
+        .error-msg {
+            margin-top: 14px;
+            padding: 10px 14px;
+            background: rgba(255, 95, 87, 0.08);
+            border: 1px solid rgba(255, 95, 87, 0.25);
+            border-left: 3px solid #ff5f57;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #ff5f57;
+            display: none;
+            animation: errorSlideIn 0.3s ease;
+        }
+
+        @keyframes errorSlideIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .error-msg::before {
+            content: '[ERROR] ';
+            font-weight: bold;
+        }
+
+        /* ========== Certificate Download Link ========== */
+        .cert-link {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .cert-download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(0, 255, 65, 0.08);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 6px;
+            color: #00ff41;
+            font-size: 11px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .cert-download-btn:hover {
+            background: rgba(0, 255, 65, 0.15);
+            border-color: rgba(0, 255, 65, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .cert-icon {
+            font-size: 12px;
+        }
+
+        /* ========== Status Line (bottom of terminal) ========== */
+        .status-line {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0, 255, 65, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            box-shadow: 0 0 6px var(--neon-green);
+            animation: statusBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes statusBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-text {
+            animation: typeStatus 1s steps(20) 2s forwards;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 0;
+            max-width: 300px;
+        }
+
+        @keyframes typeStatus {
+            to { width: 280px; }
+        }
+
+        .cursor-block {
+            display: inline-block;
+            width: 7px; height: 12px;
+            background: var(--neon-green);
+            animation: blockBlink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blockBlink {
+            50% { opacity: 0; }
+        }
+
+        /* ========== Corner Decorations ========== */
+        .corner-bracket {
+            position: absolute;
+            width: 16px; height: 16px;
+            border-color: rgba(0, 255, 65, 0.3);
+            border-style: solid;
+            border-width: 0;
+            pointer-events: none;
+        }
+        .corner-tl { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 10px; }
+        .corner-tr { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 10px; }
+        .corner-bl { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 10px; }
+        .corner-br { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 10px; }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 480px) {
+            .terminal-body { padding: 22px 20px 18px; }
+            .sys-title { font-size: 14px; letter-spacing: 2px; }
+            .terminal-window { width: 94vw; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Matrix Rain -->
+<canvas id="matrix-canvas"></canvas>
+
+<!-- Grid Overlay -->
+<div class="grid-overlay"></div>
+
+<!-- Particle Nodes -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Scanlines -->
+<div class="scanlines"></div>
+
+<!-- Terminal -->
+<div class="terminal-wrapper">
+    <div class="terminal-window">
+        <!-- Corner brackets -->
+        <div class="corner-bracket corner-tl"></div>
+        <div class="corner-bracket corner-tr"></div>
+        <div class="corner-bracket corner-bl"></div>
+        <div class="corner-bracket corner-br"></div>
+
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <span class="title-dot dot-red"></span>
+            <span class="title-dot dot-yellow"></span>
+            <span class="title-dot dot-green"></span>
+            <span class="title-text">hjsystem_auth — bash</span>
+            <span class="title-version">v2.0</span>
+        </div>
+
+        <!-- Body -->
+        <div class="terminal-body">
+            <div class="sys-header">
+                <div class="sys-icon">&#9881;&#65039;</div>
+                <div class="sys-title">元器件核价系统</div>
+                <div class="sys-subtitle">
+                    <span class="typing-line">Component Pricing System v2.0</span>
+                </div>
+            </div>
+
+            <form id="loginForm" onsubmit="return doLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="username">$ username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" class="form-input"
+                               placeholder="root@hjsystem:~$" autocomplete="username" required autofocus>
+                        <span class="input-prefix">&gt;_</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">$ password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" class="form-input"
+                               placeholder="********" autocomplete="current-password" required>
+                        <span class="input-prefix">&#128274;</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-exec" id="loginBtn">
+                    <span class="btn-text">&#9654; EXECUTE AUTH</span>
+                    <div class="progress-layer">
+                        <span class="spinner"></span>
+                        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+                        <span id="progressText">AUTH...</span>
+                    </div>
+                </button>
+
+                <div class="error-msg" id="errorMsg"></div>
+            </form>
+
+            <div class="cert-link" style="display: none;">
+                <a href="/cert-download.html" target="_blank" class="cert-download-btn" id="certLink">
+                    <span class="cert-icon">&#128272;</span>
+                    <span class="cert-text">下载 SSL 证书</span>
+                </a>
+            </div>
+
+            <div class="status-line">
+                <span class="status-dot"></span>
+                <span class="status-text">SYSTEM READY // AWAITING CREDENTIALS</span><span class="cursor-block"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+
+    // ======== Clear login cache on login page load ========
+    // Force re-login every time - clear any existing tokens
+    sessionStorage.removeItem('hj_token');
+    sessionStorage.removeItem('hj_user');
+
+    // ======== Double-click to download certificate ========
+    let clickCount = 0;
+    let lastClickTime = 0;
+    
+    document.addEventListener('click', function(e) {
+        const now = Date.now();
+        if (now - lastClickTime < 300) {
+            clickCount++;
+            if (clickCount >= 2) {
+                // Double-click detected - open certificate download page
+                const certLink = document.getElementById('certLink');
+                if (certLink) {
+                    certLink.click();
+                } else {
+                    // Fallback: open directly
+                    window.open('/cert-download.html', '_blank');
+                }
+                clickCount = 0;
+            }
+        } else {
+            clickCount = 1;
+        }
+        lastClickTime = now;
+    });
+
+    // ======== Matrix Rain Effect ========
+    (function initMatrix() {
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+        resize(); addEventListener('resize', resize);
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*(){}[]|;:<>,./?`~';
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = Array(columns).fill(1);
+
+        function draw() {
+            ctx.fillStyle = 'rgba(10, 14, 20, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
+                    drops[i] = 0;
+                drops[i]++;
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+        addEventListener('resize', () => {
+            columns = Math.floor(canvas.width / fontSize);
+            drops = Array(columns).fill(1);
+        });
+    })();
+
+    // ======== Particle Node Connections ========
+    (function initParticles() {
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+        resize(); addEventListener('resize', resize);
+
+        const particles = [];
+        const COUNT = 45;
+
+        for (let i = 0; i < COUNT; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                r: Math.random() * 2 + 1
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw connections
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 150) {
+                        const alpha = (1 - dist / 150) * 0.15;
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 212, 255, ${alpha})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw & move nodes
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 65, 0.35)';
+                ctx.fill();
+
+                // Glow
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 65, 0.05)';
+                ctx.fill();
+            }
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+
+    // ======== Login Logic ========
+    async function doLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const errDiv = document.getElementById('errorMsg');
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const fill = document.getElementById('progressFill');
+        const progText = document.getElementById('progressText');
+
+        btn.disabled = true;
+        btn.classList.remove('error', 'success');
+        btn.classList.add('loading');
+        errDiv.style.display = 'none';
+
+        // Animate progress bar
+        let pct = 0;
+        const progInterval = setInterval(() => {
+            pct += Math.random() * 12 + 3;
+            if (pct > 90) pct = 90;
+            fill.style.width = pct + '%';
+
+            const msgs = ['VERIFYING...', 'HASHING...', 'AUTHENTICATING...', 'GRANTING...'];
+            progText.textContent = msgs[Math.min(Math.floor(pct / 25), msgs.length - 1)];
+        }, 180);
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const result = await resp.json();
+
+            clearInterval(progInterval);
+            fill.style.width = '100%';
+            progText.textContent = 'ACCESS GRANTED';
+
+            if (resp.ok && result.success) {
+                btn.classList.remove('loading');
+                btn.classList.add('success');
+
+                sessionStorage.setItem('hj_token', result.token);
+                sessionStorage.setItem('hj_user', JSON.stringify({
+                    username: result.username,
+                    display_name: result.display_name,
+                    is_admin: result.is_admin
+                }));
+
+                window.location.href = '/HJ.html';
+            } else {
+                btn.classList.remove('loading', 'success');
+                btn.classList.add('error');
+                errDiv.textContent = result.detail || 'Authentication failed';
+                errDiv.style.display = 'block';
+                resetButton(btn, fill);
+            }
+        } catch (err) {
+            clearInterval(progInterval);
+            btn.classList.remove('loading', 'success');
+            btn.classList.add('error');
+            errDiv.textContent = 'Network error — server unreachable';
+            errDiv.style.display = 'block';
+            resetButton(btn, fill);
+        }
+
+        return false;
+    }
+
+    function resetButton(btn, fill) {
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.classList.remove('loading', 'error');
+            fill.style.width = '0%';
+        }, 800);
+    }
+
+    // ======== Keyboard shortcut: Enter on inputs ========
+    document.querySelectorAll('.form-input').forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doLogin(e);
+        });
+    });
+</script>
+</body>
+</html>
